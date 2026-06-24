@@ -1,0 +1,61 @@
+# Ghostty configuration — managed in dotfiles.
+# Docs: https://ghostty.org/docs/config
+
+# ---------------------------------------------------------------------------
+# Appearance
+# ---------------------------------------------------------------------------
+# Catppuccin, auto-switching with the OS light/dark setting.
+# (theme files live in ~/.config/ghostty/themes/)
+theme = dark:catppuccin-mocha,light:catppuccin-latte
+
+font-family = "JetBrainsMono Nerd Font"
+font-size = 14
+# Slightly bolder glyphs render crisper on most displays.
+font-thicken = true
+
+# A little breathing room around the grid.
+window-padding-x = 8
+window-padding-y = 6
+window-padding-balance = true
+window-decoration = true
+window-vsync = true
+
+# ---------------------------------------------------------------------------
+# Cursor
+# ---------------------------------------------------------------------------
+# Steady block pairs well with Vim/Neovim modal editing.
+cursor-style = block
+cursor-style-blink = false
+
+# ---------------------------------------------------------------------------
+# QOL for a tmux + Neovim workflow
+# ---------------------------------------------------------------------------
+# Make the macOS Option key send Alt, so <A-...> mappings in Neovim/tmux work.
+# (No-op on Linux.)
+macos-option-as-alt = true
+
+# Selecting text copies it straight to the system clipboard.
+copy-on-select = clipboard
+
+# Let the TUI drive the clipboard without a prompt — needed for seamless
+# Neovim yank, tmux set-clipboard, and OSC52 copy/paste.
+clipboard-read = allow
+clipboard-write = allow
+clipboard-paste-protection = false
+
+mouse-hide-while-typing = true
+
+# tmux already persists your sessions, so don't nag when closing a window.
+confirm-close-surface = false
+
+# Most scrollback lives in tmux/Neovim; a modest local buffer is plenty.
+scrollback-limit = 10000
+
+# Ghostty's default keybinds use Cmd (macOS) / Ctrl+Shift (Linux), which don't
+# clash with tmux's C-b prefix or Neovim — so nothing here steals your keys.
+
+# ---------------------------------------------------------------------------
+# Keybinds
+# ---------------------------------------------------------------------------
+# Reload this config in place after editing it.
+keybind = cmd+shift+comma=reload_config

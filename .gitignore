@@ -1,0 +1,4 @@
+# OS cruft
+.DS_Store
+# stow backups produced by install.sh
+*.backup-*
