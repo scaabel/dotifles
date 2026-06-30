@@ -1,6 +1,6 @@
 # dotfiles
 
-Personal dev environment: **tmux** + **neovim** + **ghostty**, set up on a fresh machine with one command.
+Personal dev environment: **zsh** + **tmux** + **neovim** + **ghostty**, set up on a fresh machine with one command.
 
 Works on macOS (Homebrew), Debian/Ubuntu (apt), and Arch (pacman).
 
@@ -21,7 +21,8 @@ That's it. The script is idempotent — safe to re-run any time.
 3. Installs **neovim** (latest official release on Linux, since distro packages are often too old for LazyVim).
 4. Installs **TPM** (tmux plugin manager) into `~/.tmux/plugins/tpm`.
 5. Symlinks the config packages into place with GNU Stow:
-   `tmux/.tmux.conf` -> `~/.tmux.conf`, `nvim/.config/nvim` -> `~/.config/nvim`,
+   `zsh/.zshrc` -> `~/.zshrc`, `tmux/.tmux.conf` -> `~/.tmux.conf`,
+   `nvim/.config/nvim` -> `~/.config/nvim`,
    and `ghostty/.config/ghostty` -> `~/.config/ghostty`.
 6. Installs the tmux plugins listed in the config.
 7. Installs a Nerd Font (Meslo) so the tmux/LazyVim icons render. Skip with `SKIP_FONT=1 ./install.sh`.
@@ -33,6 +34,8 @@ Any existing real files or directories (e.g. an old `~/.tmux.conf` or `~/.config
 ```
 dotfiles/
 ├── install.sh                  # one-shot bootstrap
+├── zsh/
+│   └── .zshrc                  # stow package -> ~/.zshrc
 ├── tmux/
 │   └── .tmux.conf              # stow package -> ~/.tmux.conf
 ├── nvim/
@@ -84,4 +87,4 @@ set -ga terminal-overrides ",xterm-ghostty:RGB"
 ## Notes
 
 - Because `~/.config/nvim` is a symlink into this repo, editing your neovim config and committing it here is all one workflow — no separate repo to sync.
-- Shell: zsh + oh-my-zsh (managed separately; not part of this repo yet).
+- Shell: `~/.zshrc` is now managed here (`zsh/.zshrc`). If you use oh-my-zsh, its framework lives in `~/.oh-my-zsh` and is installed separately, but your `.zshrc` (which points at it) is tracked in this repo.

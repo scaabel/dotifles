@@ -1,0 +1,87 @@
+{
+  "Console log": {
+    "prefix": ";clg",
+    "body": ["console.log(`logging ${${1:value}} >>`, { $1 })$0"],
+    "description": "Labelled console.log"
+  },
+  "Console log plain": {
+    "prefix": ";cl",
+    "body": ["console.log($1)$0"],
+    "description": "console.log()"
+  },
+  "Console table": {
+    "prefix": ";clt",
+    "body": ["console.table(${1:data})$0"],
+    "description": "console.table()"
+  },
+  "Console error": {
+    "prefix": ";cle",
+    "body": ["console.error(`${1:label} >>`, ${2:error})$0"],
+    "description": "console.error()"
+  },
+  "Console warn": {
+    "prefix": ";clw",
+    "body": ["console.warn($1)$0"],
+    "description": "console.warn()"
+  },
+  "Debugger": {
+    "prefix": ";dbg",
+    "body": ["debugger;$0"],
+    "description": "debugger statement"
+  },
+  "Arrow function": {
+    "prefix": ";af",
+    "body": ["const ${1:name} = (${2:args}) => {", "\t$0", "}"],
+    "description": "Arrow function"
+  },
+  "Async arrow function": {
+    "prefix": ";aaf",
+    "body": ["const ${1:name} = async (${2:args}) => {", "\t$0", "}"],
+    "description": "Async arrow function"
+  },
+  "Function": {
+    "prefix": ";fn",
+    "body": ["function ${1:name}(${2:args}) {", "\t$0", "}"],
+    "description": "Named function"
+  },
+  "Async function": {
+    "prefix": ";afn",
+    "body": ["async function ${1:name}(${2:args}) {", "\t$0", "}"],
+    "description": "Async named function"
+  },
+  "Export const": {
+    "prefix": ";ec",
+    "body": ["export const ${1:name} = $0"],
+    "description": "export const"
+  },
+  "Export default": {
+    "prefix": ";ed",
+    "body": ["export default ${1:name}$0"],
+    "description": "export default"
+  },
+  "Named import": {
+    "prefix": ";imp",
+    "body": ["import { $2 } from \"${1:module}\"$0"],
+    "description": "Named import"
+  },
+  "Default import": {
+    "prefix": ";impd",
+    "body": ["import ${2:name} from \"${1:module}\"$0"],
+    "description": "Default import"
+  },
+  "Import everything as": {
+    "prefix": ";impa",
+    "body": ["import * as ${2:name} from \"${1:module}\"$0"],
+    "description": "Namespace import"
+  },
+  "Try/catch": {
+    "prefix": ";try",
+    "body": ["try {", "\t$1", "} catch (${2:error}) {", "\t$0", "}"],
+    "description": "try/catch block"
+  },
+  "Await": {
+    "prefix": ";aw",
+    "body": ["const ${1:result} = await $0"],
+    "description": "await assignment"
+  }
+}

@@ -12,7 +12,7 @@ set -euo pipefail
 # ----------------------------- configuration -----------------------------
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TPM_REPO="https://github.com/tmux-plugins/tpm"
-STOW_PACKAGES=(tmux nvim ghostty)   # add more package dirs here as you grow the repo
+STOW_PACKAGES=(zsh tmux nvim ghostty)   # add more package dirs here as you grow the repo
 
 # ------------------------------- logging ---------------------------------
 c_reset=$'\033[0m'; c_blue=$'\033[1;34m'; c_green=$'\033[1;32m'

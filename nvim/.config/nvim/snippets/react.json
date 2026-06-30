@@ -1,0 +1,59 @@
+{
+  "useState": {
+    "prefix": ";us",
+    "body": ["const [${1:state}, set${1/(.*)/${1:/capitalize}/}] = useState(${2:initial})$0"],
+    "description": "useState hook"
+  },
+  "useEffect": {
+    "prefix": ";ue",
+    "body": ["useEffect(() => {", "\t$1", "}, [${2:deps}])$0"],
+    "description": "useEffect hook"
+  },
+  "useEffect with cleanup": {
+    "prefix": ";uec",
+    "body": [
+      "useEffect(() => {",
+      "\t$1",
+      "\treturn () => {",
+      "\t\t$2",
+      "\t}",
+      "}, [${3:deps}])$0"
+    ],
+    "description": "useEffect with cleanup"
+  },
+  "useMemo": {
+    "prefix": ";um",
+    "body": ["const ${1:value} = useMemo(() => ${2:compute}, [${3:deps}])$0"],
+    "description": "useMemo hook"
+  },
+  "useCallback": {
+    "prefix": ";ucb",
+    "body": ["const ${1:fn} = useCallback((${2:args}) => {", "\t$3", "}, [${4:deps}])$0"],
+    "description": "useCallback hook"
+  },
+  "useRef": {
+    "prefix": ";ur",
+    "body": ["const ${1:ref} = useRef(${2:null})$0"],
+    "description": "useRef hook"
+  },
+  "Function component": {
+    "prefix": ";rfc",
+    "body": [
+      "interface ${1:${TM_FILENAME_BASE}}Props {",
+      "\t$2",
+      "}",
+      "",
+      "export function ${1:${TM_FILENAME_BASE}}({ $3 }: ${1:${TM_FILENAME_BASE}}Props) {",
+      "\treturn (",
+      "\t\t<div>$0</div>",
+      "\t)",
+      "}"
+    ],
+    "description": "Typed React function component"
+  },
+  "Props interface": {
+    "prefix": ";props",
+    "body": ["interface ${1:Component}Props {", "\t$0", "}"],
+    "description": "Props interface"
+  }
+}

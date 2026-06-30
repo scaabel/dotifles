@@ -1,0 +1,16 @@
+{
+  "name": "dotfiles-snippets",
+  "version": "1.0.0",
+  "description": "Personal QOL snippets loaded by blink.cmp",
+  "license": "MIT",
+  "contributes": {
+    "snippets": [
+      { "language": "javascript", "path": "./javascript.json" },
+      { "language": "javascriptreact", "path": "./javascript.json" },
+      { "language": "typescript", "path": "./javascript.json" },
+      { "language": "typescriptreact", "path": "./javascript.json" },
+      { "language": "javascriptreact", "path": "./react.json" },
+      { "language": "typescriptreact", "path": "./react.json" }
+    ]
+  }
+}
