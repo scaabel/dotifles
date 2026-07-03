@@ -4,15 +4,20 @@
 # Supports: macOS (Homebrew), Debian/Ubuntu (apt), Arch (pacman).
 #
 # Usage:
-#   ./install.sh            # full setup
-#   SKIP_FONT=1 ./install.sh    # skip Nerd Font install
+#   ./install.sh                 # interactive picker (or full setup if non-interactive)
+#   ./install.sh nvim            # install only the neovim config
+#   ./install.sh nvim tmux       # install multiple packages
+#   ./install.sh --all           # install everything, no prompt
+#   ./install.sh --list          # show available packages
+#   SKIP_FONT=1 ./install.sh     # skip Nerd Font install
 #
 set -euo pipefail
 
 # ----------------------------- configuration -----------------------------
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TPM_REPO="https://github.com/tmux-plugins/tpm"
-STOW_PACKAGES=(zsh tmux nvim ghostty)   # add more package dirs here as you grow the repo
+AVAILABLE_PACKAGES=(zsh tmux nvim ghostty)   # add more package dirs here as you grow the repo
+SELECTED_PACKAGES=()
 
 # ------------------------------- logging ---------------------------------
 c_reset=$'\033[0m'; c_blue=$'\033[1;34m'; c_green=$'\033[1;32m'
@@ -22,6 +27,86 @@ ok(){   printf '%s  ok%s %s\n' "$c_green" "$c_reset" "$*"; }
 warn(){ printf '%s warn%s %s\n' "$c_yellow" "$c_reset" "$*"; }
 err(){  printf '%s fail%s %s\n' "$c_red" "$c_reset" "$*" >&2; }
 have(){ command -v "$1" >/dev/null 2>&1; }
+contains(){ local x; for x in "${SELECTED_PACKAGES[@]}"; do [[ "$x" == "$1" ]] && return 0; done; return 1; }
+
+# ------------------------------ selection ---------------------------------
+usage(){
+  cat <<USAGE
+Usage: ./install.sh [packages...] [options]
+
+Available packages: ${AVAILABLE_PACKAGES[*]}
+
+Options:
+  -p, --packages <list>   Comma or space separated package names
+  -a, --all               Install every package, no prompt
+  -l, --list              List available packages and exit
+  -h, --help              Show this help
+
+Env vars:
+  SKIP_FONT=1             Skip Nerd Font install
+
+Examples:
+  ./install.sh                    # interactive picker
+  ./install.sh nvim                # install only the neovim config
+  ./install.sh --packages nvim,tmux
+  ./install.sh --all
+USAGE
+}
+
+add_packages(){
+  local raw="${1//,/ }" name
+  for name in $raw; do
+    if [[ " ${AVAILABLE_PACKAGES[*]} " == *" $name "* ]]; then
+      SELECTED_PACKAGES+=("$name")
+    else
+      err "Unknown package: $name (available: ${AVAILABLE_PACKAGES[*]})"
+      exit 1
+    fi
+  done
+}
+
+parse_args(){
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      -h|--help) usage; exit 0 ;;
+      -l|--list) printf '%s\n' "${AVAILABLE_PACKAGES[@]}"; exit 0 ;;
+      -a|--all) SELECTED_PACKAGES=("${AVAILABLE_PACKAGES[@]}"); shift ;;
+      -p|--packages) shift; [[ $# -gt 0 ]] || { err "--packages needs a value"; exit 1; }
+                     add_packages "$1"; shift ;;
+      --packages=*) add_packages "${1#*=}"; shift ;;
+      -*) err "Unknown option: $1"; usage; exit 1 ;;
+      *) add_packages "$1"; shift ;;
+    esac
+  done
+}
+
+interactive_pick(){
+  echo
+  info "Select packages to install:"
+  local i
+  for i in "${!AVAILABLE_PACKAGES[@]}"; do
+    printf '  %d) %s\n' "$((i + 1))" "${AVAILABLE_PACKAGES[$i]}"
+  done
+  echo
+  local reply tok chosen=()
+  read -rp "Enter numbers or names (space/comma separated), or 'all' [all]: " reply
+  reply="${reply:-all}"
+  if [[ "$reply" == "all" ]]; then
+    SELECTED_PACKAGES=("${AVAILABLE_PACKAGES[@]}")
+    return
+  fi
+  reply="${reply//,/ }"
+  for tok in $reply; do
+    if [[ "$tok" =~ ^[0-9]+$ ]] && (( tok >= 1 && tok <= ${#AVAILABLE_PACKAGES[@]} )); then
+      chosen+=("${AVAILABLE_PACKAGES[$((tok - 1))]}")
+    elif [[ " ${AVAILABLE_PACKAGES[*]} " == *" $tok "* ]]; then
+      chosen+=("$tok")
+    else
+      warn "Skipping unknown selection: $tok"
+    fi
+  done
+  SELECTED_PACKAGES=("${chosen[@]}")
+}
 
 # ------------------------- platform detection ----------------------------
 OS=""; PM=""
@@ -52,12 +137,14 @@ ensure_brew(){
 }
 
 install_core(){
-  info "Installing core tools (git, tmux, stow, curl)..."
+  local pkgs=(git stow curl)
+  contains tmux && pkgs+=(tmux)
+  info "Installing core tools (${pkgs[*]})..."
   case "$OS" in
-    macos)  ensure_brew; brew install git tmux stow ;;
+    macos)  ensure_brew; brew install "${pkgs[@]}" ;;
     debian) sudo apt-get update -y
-            sudo apt-get install -y git tmux stow curl ca-certificates ;;
-    arch)   sudo pacman -Sy --needed --noconfirm git tmux stow curl ;;
+            sudo apt-get install -y "${pkgs[@]}" ca-certificates ;;
+    arch)   sudo pacman -Sy --needed --noconfirm "${pkgs[@]}" ;;
   esac
   ok "Core tools installed"
 }
@@ -143,7 +230,7 @@ stow_packages(){
   have stow || { err "stow missing"; exit 1; }
   cd "$DOTFILES_DIR"
   local pkg
-  for pkg in "${STOW_PACKAGES[@]}"; do
+  for pkg in "${SELECTED_PACKAGES[@]}"; do
     [[ -d "$pkg" ]] || { warn "Package '$pkg' not found, skipping"; continue; }
     backup_conflicts "$DOTFILES_DIR/$pkg" "$HOME"
     info "Stowing $pkg -> \$HOME"
@@ -179,22 +266,34 @@ install_font(){
 
 # -------------------------------- main -----------------------------------
 main(){
+  parse_args "$@"
+  if [[ ${#SELECTED_PACKAGES[@]} -eq 0 ]]; then
+    if [[ -t 0 ]]; then
+      interactive_pick
+    else
+      info "Non-interactive shell, no packages given — installing everything"
+      SELECTED_PACKAGES=("${AVAILABLE_PACKAGES[@]}")
+    fi
+  fi
+  [[ ${#SELECTED_PACKAGES[@]} -gt 0 ]] || { err "No packages selected"; exit 1; }
+
   info "Starting dotfiles setup from $DOTFILES_DIR"
+  info "Packages: ${SELECTED_PACKAGES[*]}"
   detect_platform
   install_core
-  install_neovim
-  install_tpm
+  contains nvim && install_neovim
+  contains tmux && install_tpm
   stow_packages
-  install_tmux_plugins
+  contains tmux && install_tmux_plugins
   install_font
   echo
   ok "All done!"
-  cat <<'NEXT'
+  cat <<NEXT
 
 Next steps:
-  * Start tmux (or reload:  tmux source-file ~/.tmux.conf)
-  * If the status bar looks bare, press  <prefix> + I  to install plugins
-  * Launch  nvim  — LazyVim will sync its plugins on first run
+$(contains tmux && echo '  * Start tmux (or reload:  tmux source-file ~/.tmux.conf)')
+$(contains tmux && echo '  * If the status bar looks bare, press  <prefix> + I  to install plugins')
+$(contains nvim && echo '  * Launch  nvim  — LazyVim will sync its plugins on first run')
   * Set your terminal font to the installed Nerd Font (Meslo) for icons
 NEXT
 }
