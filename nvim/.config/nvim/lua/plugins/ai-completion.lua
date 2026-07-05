@@ -1,8 +1,13 @@
+-- Set vim.g.ai_provider = "copilot" in init.lua to swap this out for GitHub
+-- Copilot (lua/plugins/copilot.lua) instead of the local minuet engine.
 return {
   -- Local FIM completion engine (Ollama + qwen2.5-coder), surfaced via blink.cmp.
   {
     "milanglacier/minuet-ai.nvim",
     event = "InsertEnter",
+    enabled = function()
+      return vim.g.ai_provider == "minuet"
+    end,
     opts = {
       provider = "openai_fim_compatible",
       n_completions = 1,
@@ -28,6 +33,9 @@ return {
   -- Register minuet as a blink.cmp source (extends the default source list).
   {
     "saghen/blink.cmp",
+    enabled = function()
+      return vim.g.ai_provider == "minuet"
+    end,
     opts = {
       sources = {
         default = { "minuet" },
