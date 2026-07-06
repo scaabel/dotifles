@@ -30,33 +30,41 @@ return {
     end,
   },
 
-  -- Register minuet as a blink.cmp source (extends the default source list).
+  -- Register minuet as a blink.cmp source (appended to the default source list).
+  -- blink.cmp itself stays enabled for every provider — only the minuet source
+  -- is conditional, so LSP/snippets/buffer completion keeps working when the
+  -- provider is "copilot".
   {
     "saghen/blink.cmp",
-    enabled = function()
-      return vim.g.ai_provider == "minuet"
-    end,
-    opts = {
-      sources = {
-        default = { "minuet" },
-        providers = {
-          minuet = {
-            name = "minuet",
-            module = "minuet.blink",
-            async = true,
-            timeout_ms = 3000,
-            score_offset = 50,
-          },
+    opts = function(_, opts)
+      if vim.g.ai_provider ~= "minuet" then
+        return
+      end
+      opts.sources = opts.sources or {}
+      opts.sources.default = opts.sources.default or {}
+      table.insert(opts.sources.default, "minuet")
+      opts.sources.providers = vim.tbl_deep_extend("force", opts.sources.providers or {}, {
+        minuet = {
+          name = "minuet",
+          module = "minuet.blink",
+          async = true,
+          timeout_ms = 3000,
+          score_offset = 50,
         },
-      },
-      completion = { trigger = { prefetch_on_insert = false } },
-    },
+      })
+      opts.completion = vim.tbl_deep_extend("force", opts.completion or {}, {
+        trigger = { prefetch_on_insert = false },
+      })
+    end,
   },
 
   -- Local next-edit ("sweep") prediction as inline ghost text.
   {
     "BlinkResearchLabs/blink-edit.nvim",
     event = "InsertEnter",
+    enabled = function()
+      return vim.g.ai_provider == "minuet"
+    end,
     opts = {
       llm = {
         backend = "ollama",

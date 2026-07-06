@@ -1,7 +1,7 @@
 {
   "Console log": {
     "prefix": ";clg",
-    "body": ["console.log(`logging ${${1:value}} >>`, { $1 })$0"],
+    "body": ["console.log(`logging \\${${1:value}} >>`, { $1 })$0"],
     "description": "Labelled console.log"
   },
   "Console log plain": {

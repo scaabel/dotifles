@@ -36,6 +36,26 @@ return {
         opts.formatters_by_ft[ft] = opts.formatters_by_ft[ft] or {}
         table.insert(opts.formatters_by_ft[ft], 1, "biome") -- biome first
       end
+
+      -- Without a project biome.json{,c}, biome's defaults inject semicolons,
+      -- trailing commas, and buffer-derived indentation — enforce house style
+      -- instead. Projects with their own biome config keep full control.
+      opts.formatters = opts.formatters or {}
+      opts.formatters.biome = {
+        args = function(self, ctx)
+          local args = { "format", "--stdin-file-path", "$FILENAME" }
+          if not self:cwd(ctx) then
+            vim.list_extend(args, {
+              "--semicolons=as-needed",
+              "--trailing-commas=none",
+              "--indent-style=space",
+              "--indent-width=2",
+              "--javascript-formatter-quote-style=single",
+            })
+          end
+          return args
+        end,
+      }
     end,
   },
 }
