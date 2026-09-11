@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 #
-# dotfiles bootstrap — sets up tmux + neovim + ghostty on a fresh machine.
+# dotfiles bootstrap — sets up tmux + neovim + ghostty + pi on a fresh machine.
 # Supports: macOS (Homebrew), Debian/Ubuntu (apt), Arch (pacman).
 #
 # Usage:
 #   ./install.sh                 # interactive picker (or full setup if non-interactive)
 #   ./install.sh nvim            # install only the neovim config
+#   ./install.sh pi              # install only the pi workflow
 #   ./install.sh nvim tmux       # install multiple packages
 #   ./install.sh --all           # install everything, no prompt
 #   ./install.sh --list          # show available packages
@@ -16,7 +17,9 @@ set -euo pipefail
 # ----------------------------- configuration -----------------------------
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TPM_REPO="https://github.com/tmux-plugins/tpm"
-AVAILABLE_PACKAGES=(zsh tmux nvim ghostty)   # add more package dirs here as you grow the repo
+PI_WORKFLOW_REPO="https://github.com/scaabel/pi-workflow.git"
+PI_WORKFLOW_DIR="$HOME/Projects/pi-workflow"
+AVAILABLE_PACKAGES=(zsh tmux nvim ghostty pi)   # add more package dirs here as you grow the repo
 SELECTED_PACKAGES=()
 
 # ------------------------------- logging ---------------------------------
@@ -202,6 +205,37 @@ install_tmux_plugins(){
   fi
 }
 
+# ----------------------------- pi-workflow -------------------------------
+# Not a stow package: pi-workflow lives in its own repo and links itself into
+# ~/.pi/agent via its own install.sh. Here we clone it (clearing a non-empty
+# target only with explicit confirmation) and hand off to that script.
+install_pi(){
+  have git || { err "git is required to clone pi-workflow"; exit 1; }
+
+  if [[ -d "$PI_WORKFLOW_DIR" ]] && [[ -n "$(ls -A "$PI_WORKFLOW_DIR" 2>/dev/null)" ]]; then
+    local reply
+    warn "$PI_WORKFLOW_DIR exists and is not empty"
+    read -rp "Clear existing files and re-clone? [y/N] " reply
+    case "$reply" in
+      y|Y|yes|YES) rm -rf "$PI_WORKFLOW_DIR" ;;
+      *)
+        warn "Skipping pi setup (kept $PI_WORKFLOW_DIR)"
+        info "To use the existing copy: (cd $PI_WORKFLOW_DIR && ./install.sh)"
+        return 0
+        ;;
+    esac
+  fi
+
+  info "Cloning pi-workflow -> $PI_WORKFLOW_DIR"
+  mkdir -p "$(dirname "$PI_WORKFLOW_DIR")"
+  git clone "$PI_WORKFLOW_REPO" "$PI_WORKFLOW_DIR"
+  ok "Cloned pi-workflow"
+
+  info "Running pi-workflow install.sh"
+  ( cd "$PI_WORKFLOW_DIR" && ./install.sh )
+  ok "pi-workflow installed"
+}
+
 # -------------------------------- stow -----------------------------------
 # Recursively back up anything in $HOME that would block stow, at the right
 # granularity: stow folds (symlinks) the shallowest directory that doesn't yet
@@ -231,6 +265,7 @@ stow_packages(){
   cd "$DOTFILES_DIR"
   local pkg
   for pkg in "${SELECTED_PACKAGES[@]}"; do
+    [[ "$pkg" == "pi" ]] && continue    # cloned + linked by install_pi, not a stow package
     [[ -d "$pkg" ]] || { warn "Package '$pkg' not found, skipping"; continue; }
     backup_conflicts "$DOTFILES_DIR/$pkg" "$HOME"
     info "Stowing $pkg -> \$HOME"
@@ -284,8 +319,9 @@ main(){
   contains nvim && install_neovim
   contains tmux && install_tpm
   stow_packages
+  contains pi && install_pi
   contains tmux && install_tmux_plugins
-  install_font
+  { contains nvim || contains tmux; } && install_font
   echo
   ok "All done!"
   cat <<NEXT
@@ -294,7 +330,8 @@ Next steps:
 $(contains tmux && echo '  * Start tmux (or reload:  tmux source-file ~/.tmux.conf)')
 $(contains tmux && echo '  * If the status bar looks bare, press  <prefix> + I  to install plugins')
 $(contains nvim && echo '  * Launch  nvim  — LazyVim will sync its plugins on first run')
-  * Set your terminal font to the installed Nerd Font (Meslo) for icons
+$(contains pi && echo '  * Run  pi  and use /login (or set API keys) — credentials are machine-local')
+$( { contains nvim || contains tmux; } && echo '  * Set your terminal font to the installed Nerd Font (Meslo) for icons')
 NEXT
 }
 
